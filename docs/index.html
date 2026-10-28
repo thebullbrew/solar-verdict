@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Solar Verdict — Buy, Lease, or Skip Rooftop Solar?</title>
+<meta name="description" content="Rooftop solar judge: net cost after credits, true payback with rate escalation and panel degradation, 25-year net, breakeven electric rate, and the buy vs lease answer.">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#120D08">
+<link rel="icon" href="icons/icon-32.png"><style>
+:root{--bg:#120D08;--surface:#1E150D;--text:#F3ECDD;--accent:#C08040;--accent2:#7A4A22;--muted:#B8A88F;--line:#3A2817;--good:#9AB86A;--bad:#D97A5A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,serif;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-size:12px;text-align:center}
+h1{font-size:42px;text-align:center;margin:8px 0 4px;line-height:1.05} .sub{text-align:center;color:var(--muted);max-width:680px;margin:0 auto 20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;background-image:repeating-linear-gradient(transparent,transparent 27px,rgba(192,128,64,.05) 28px)}
+h2{color:var(--accent);font-size:20px;margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:32px}}
+label{font-size:13px;color:var(--muted);display:block}input,select{width:100%;padding:10px;margin-top:4px;background:#120D08;border:1px solid var(--line);color:var(--text);border-radius:6px;font-size:16px}
+button{background:var(--accent2);color:#F3ECDD;border:1px solid var(--accent);padding:10px 14px;border-radius:6px;cursor:pointer;font-family:Georgia,serif}
+button.primary{background:var(--accent);color:#120D08;font-weight:bold}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.hero{text-align:center}.verdict{display:inline-block;border:3px solid var(--accent);color:var(--accent);border-radius:50%;width:150px;height:150px;line-height:1.1;padding-top:42px;font-weight:bold;font-size:20px;transform:rotate(-6deg)}
+.big{font-size:38px;color:var(--accent);font-weight:bold}.row{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:7px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--accent)}
+.bar{height:18px;background:#120D08;border:1px solid var(--line);display:flex}.bar div{height:100%}
+.small{font-size:13px;color:var(--muted)} .saved{font-size:14px}
+</style></head><body><div class="wrap">
+<p class="eyebrow">The Solar Verdict · Copper Ledger</p>
+<h1>Solar panels pay. Or they don't.<br>This tells you which.</h1>
+<p class="sub">No sales pitch. Enter the quote you actually got, your real electric rate, and how fast that rate climbs. You get the net cost, the honest payback, the 25-year net, and whether buying beats leasing — or whether to walk away.</p>
+
+<div class="card"><h2>1 · Your roof, your quote</h2>
+<div class="presets"><button onclick="preset(6,19200,1250)">Modest · 6 kW</button><button onclick="preset(8.5,26350,1280)">Family · 8.5 kW</button><button onclick="preset(12,37200,1300)">Estate · 12 kW</button></div>
+<div class="grid">
+<label>System size (kW)<input id="kw" type="number" step="0.1" value="8.5"></label>
+<label>Gross installed cost ($)<input id="cost" type="number" value="26350"></label>
+<label>Production (kWh per kW / year)<input id="prod" type="number" value="1280"></label>
+<label>Federal credit (%)<input id="fed" type="number" value="30"></label>
+<label>State / utility incentive ($)<input id="state" type="number" value="1000"></label>
+<label>Annual maintenance / inverter reserve ($/yr)<input id="maint" type="number" value="150"></label>
+</div></div>
+
+<div class="card"><h2>2 · Your power bill</h2><div class="grid">
+<label>Electric rate today ($/kWh)<input id="rate" type="number" step="0.01" value="0.28"></label>
+<label>Rate escalation (% / year)<input id="esc" type="number" step="0.1" value="3.5"></label>
+<label>Share you use yourself (%)<input id="self" type="number" value="80"></label>
+<label>Export / net-metering credit ($/kWh)<input id="exportRate" type="number" step="0.01" value="0.10"></label>
+<label>Panel degradation (% / year)<input id="deg" type="number" step="0.1" value="0.5"></label>
+<label>Discount rate for NPV (%)<input id="disc" type="number" step="0.1" value="5"></label>
+<label>Lease / PPA cost if offered ($/mo, 0 = none)<input id="leaseMo" type="number" value="145"></label>
+<label>Lease escalator (% / year)<input id="leaseEsc" type="number" step="0.1" value="2.9"></label>
+</div></div>
+
+<div class="card hero"><div id="verdict" class="verdict">—</div>
+<p class="big" id="net25">—</p><p id="verdictText">Enter your numbers — the verdict updates live.</p>
+<div style="text-align:left">
+<div class="row"><span>Net cost after credits &amp; incentives</span><b id="netCost">—</b></div>
+<div class="row"><span>Year-1 production</span><b id="y1prod">—</b></div>
+<div class="row"><span>Year-1 savings (after maintenance)</span><b id="y1save">—</b></div>
+<div class="row"><span>Simple payback</span><b id="payback">—</b></div>
+<div class="row"><span>25-year gross savings</span><b id="gross25">—</b></div>
+<div class="row"><span>25-year NPV (vs discount rate)</span><b id="npv">—</b></div>
+<div class="row"><span>Breakeven electric rate (payback by year 15)</span><b id="beRate">—</b></div>
+<div class="row"><span>Cost per watt (net)</span><b id="cpw">—</b></div>
+<div class="row" id="leaseRow"><span>Lease 25-yr total cost vs buying net benefit</span><b id="leaseOut">—</b></div>
+</div>
+<p class="small">Year-1 savings anatomy</p><div class="bar"><div id="barSelf" style="background:#C08040"></div><div id="barExp" style="background:#7A4A22"></div></div>
+<p class="small"><span id="barLabel"></span></p>
+</div>
+
+<div class="card"><h2>Sensitivity — rate escalation changes everything</h2><div id="sens"></div>
+<p class="small">A salesman assumes your rate climbs forever. At 0% escalation many systems never pay. At 5%+ almost all do. Know which world you live in before you sign.</p></div>
+
+<div class="card"><h2>Save &amp; share</h2>
+<input id="saveName" placeholder="Name this scenario — e.g. Main house, 8.5 kW quote" style="margin-bottom:10px">
+<button class="primary" onclick="saveScenario()">Save scenario</button> <button onclick="copySummary()">Copy summary</button>
+<div id="savedList" class="saved"></div>
+<p class="small">Estimates only — production varies by roof, shade and weather; credits depend on tax liability and current law. Get the production guarantee in writing.</p></div>
+</div>
+<script>
+const $=id=>document.getElementById(id); const v=id=>parseFloat($(id).value)||0;
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+function calc(escOverride){
+ const kw=v('kw'),cost=v('cost'),prod=v('prod'),fed=v('fed')/100,state=v('state'),maint=v('maint');
+ const rate=v('rate'),esc=(escOverride!==undefined?escOverride:v('esc'))/100,self=v('self')/100,expR=v('exportRate'),deg=v('deg')/100,disc=v('disc')/100;
+ const netCost=Math.max(0,cost*(1-fed)-state);
+ let cum=-netCost, gross=0, npv=-netCost, payback=null, y1save=0, y1prod=kw*prod;
+ for(let y=1;y<=25;y++){
+   const p=kw*prod*Math.pow(1-deg,y-1);
+   const r=rate*Math.pow(1+esc,y-1);
+   const save=p*(self*r+(1-self)*expR)-maint;
+   if(y===1)y1save=save;
+   gross+=save; cum+=save; npv+=save/Math.pow(1+disc,y);
+   if(payback===null&&cum>=0)payback=y-1+ (save? ( (cum-save<0? - (cum-save):0)/save):0);
+   if(payback===null&&cum>=0)payback=y;
+ }
+ // precise payback interpolation
+ cum=-netCost; payback=null;
+ for(let y=1;y<=25;y++){const p=kw*prod*Math.pow(1-deg,y-1);const r=rate*Math.pow(1+esc,y-1);const save=p*(self*r+(1-self)*expR)-maint; const prev=cum; cum+=save; if(cum>=0&&prev<0){payback=(y-1)+(-prev/save);break;}}
+ // breakeven rate for payback by yr15: binary search
+ let lo=0,hi=2;
+ for(let i=0;i<40;i++){const mid=(lo+hi)/2; let c=-netCost; for(let y=1;y<=15;y++){const p=kw*prod*Math.pow(1-deg,y-1);const r=mid*Math.pow(1+esc,y-1); c+=p*(self*r+(1-self)*expR)-maint;} if(c>=0)hi=mid; else lo=mid;}
+ return {netCost,gross25:gross,net25:gross-netCost,npv,payback,y1save,y1prod,beRate:hi,cpw:kw?netCost/(kw*1000):0};
+}
+function render(){
+ const r=calc();
+ $('netCost').textContent=fmt(r.netCost); $('y1prod').textContent=Math.round(r.y1prod).toLocaleString()+' kWh';
+ $('y1save').textContent=fmt(r.y1save); $('payback').textContent=r.payback?r.payback.toFixed(1)+' years':'Never in 25 yrs';
+ $('gross25').textContent=fmt(r.gross25); $('net25').textContent=fmt(r.net25)+' over 25 years';
+ $('npv').textContent=fmt(r.npv); $('beRate').textContent='$'+r.beRate.toFixed(3)+' /kWh'; $('cpw').textContent='$'+r.cpw.toFixed(2)+' /W';
+ const selfShare=v('self'); $('barSelf').style.width=selfShare+'%'; $('barExp').style.width=(100-selfShare)+'%';
+ $('barLabel').textContent=selfShare+'% self-used at full retail rate · '+(100-selfShare)+'% exported at the lower credit — self-use is where the money is.';
+ let verdict,txt;
+ if(r.payback&&r.payback<=9&&r.npv>0){verdict='BUY IT';txt='Fast payback and positive NPV even after discounting. Buying beats renting your own roof. Get two more quotes and take the best installer, not the best pitch.';}
+ else if(r.payback&&r.payback<=14){verdict='CLOSE CALL';txt='It pays, but slowly. Your rate escalation assumption is doing the heavy lifting. Negotiate the price down, raise self-use (EV, heat pump, timing loads), or consider a lease only if its total is clearly lower.';}
+ else{verdict='SKIP IT';txt='At these numbers the roof loses money. Either the quote is too fat, your rate is too low, or too much power gets exported cheap. Do not let a door-knocker reframe this as urgency.';}
+ $('verdict').textContent=verdict; $('verdictText').textContent=txt;
+ // lease
+ const lm=v('leaseMo'),le=v('leaseEsc')/100;
+ if(lm>0){let leaseTotal=0;for(let y=0;y<25;y++)leaseTotal+=lm*12*Math.pow(1+le,y); $('leaseOut').textContent=fmt(leaseTotal)+' paid out · buy net '+fmt(r.net25);}
+ else $('leaseOut').textContent='No lease entered';
+ // sensitivity
+ let h='<table><tr><th>Rate escalation</th><th>Payback</th><th>25-yr net</th><th>NPV</th></tr>';
+ [0,2,3.5,5,7].forEach(e=>{const s=calc(e);h+='<tr><td>'+e+'%/yr</td><td>'+(s.payback?s.payback.toFixed(1)+' yrs':'Never')+'</td><td>'+fmt(s.net25)+'</td><td>'+fmt(s.npv)+'</td></tr>';});
+ h+='</table>'; $('sens').innerHTML=h;
+ window._last=r; window._verdict=verdict;
+}
+function preset(kw,cost,prod){$('kw').value=kw;$('cost').value=cost;$('prod').value=prod;render();}
+function saveScenario(){const name=$('saveName').value||'Solar scenario';const all=JSON.parse(localStorage.getItem('solarVerdict')||'[]');const data={};['kw','cost','prod','fed','state','maint','rate','esc','self','exportRate','deg','disc','leaseMo','leaseEsc'].forEach(id=>data[id]=$(id).value);all.push({name,data,net:window._last?window._last.net25:0});localStorage.setItem('solarVerdict',JSON.stringify(all));listSaved();}
+function listSaved(){const all=JSON.parse(localStorage.getItem('solarVerdict')||'[]');$('savedList').innerHTML=all.map((s,i)=>'<div class="row"><span>'+s.name+'</span><b>'+fmt(s.net)+' · <a href="#" onclick="loadS('+i+');return false" style="color:var(--accent)">load</a></b></div>').join('');}
+function loadS(i){const all=JSON.parse(localStorage.getItem('solarVerdict')||'[]');const d=all[i].data;Object.keys(d).forEach(k=>{if($(k))$(k).value=d[k]});render();}
+function copySummary(){const r=window._last;const t='The Solar Verdict: '+window._verdict+' — Net cost '+fmt(r.netCost)+', Year-1 savings '+fmt(r.y1save)+', Payback '+(r.payback?r.payback.toFixed(1)+' yrs':'never')+', 25-yr net '+fmt(r.net25)+', NPV '+fmt(r.npv)+', Breakeven rate $'+r.beRate.toFixed(3)+'/kWh.';navigator.clipboard.writeText(t);alert('Summary copied.');}
+document.querySelectorAll('input').forEach(el=>el.addEventListener('input',render));
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+render();listSaved();
+</script></body></html>
